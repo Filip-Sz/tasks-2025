@@ -13,11 +13,12 @@ from train_utils import *
 MEAN = [0.2980, 0.2962, 0.2987]
 STD = [0.2886, 0.2875, 0.2889]
 
+
 def main():
     with open("config.yaml", "r") as file:
         config = yaml.safe_load(file)
 
-    DEVICE = "cpu"
+    DEVICE = "cuda"
 
     model = resnet50(weights="IMAGENET1K_V1")
     model.fc = torch.nn.Linear(model.fc.weight.shape[1], 10)
@@ -28,10 +29,7 @@ def main():
             transforms.Resize((32, 32)),
             transforms.Lambda(lambda x: x.convert("RGB")),
             transforms.ToTensor(),
-            transforms.Normalize(
-                mean = MEAN,
-                std = STD
-            )
+            transforms.Normalize(mean=MEAN, std=STD),
         ]
     )
 
