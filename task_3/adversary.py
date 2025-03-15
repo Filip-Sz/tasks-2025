@@ -2,24 +2,27 @@ import torch
 import typing
 
 def FGSM(
-    model: torch.nn.Module,
-    x: torch.Tensor,
-    y: torch.Tensor,
-    epsilon: float = 1/255
-) -> torch.Tensor: 
-    x.requires_grad = True
-    pred = model(x)
-
-    loss = torch.nn.CrossEntropyLoss()(pred, y)
-    model.zero_grad()
-    loss.backward()
-    data_grad = x.grad.data
-    sign_data_grad = data_grad.sign()
-
-    perturbed_image = x + epsilon*sign_data_grad
-    perturbed_image = torch.clamp(perturbed_image, 0, 1)
-
-    return perturbed_image
+     model: torch.nn.Module,
+     x: torch.Tensor,
+     y: torch.Tensor,
+     epsilon: float = 1/255
+ ) -> torch.Tensor: 
+     was_training = model.training
+     model.eval()
+     x = x.clone().detach()
+     x.requires_grad = True
+ 
+     logits = model(x)
+     loss = torch.nn.CrossEntropyLoss()(logits, y)
+     x_grad = torch.autograd.grad(loss, x)[0].sign()
+ 
+     perturbation = x_grad*epsilon
+     perturbated_img = torch.clamp(x + perturbation, 0, 1).detach()
+ 
+     if was_training:
+         model.train()
+ 
+     return perturbated_img.requires_grad_(False)
 
 
 def PGD(
