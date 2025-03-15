@@ -52,22 +52,19 @@ def train_step(model: nn.Module,
     train_loss, train_score, train_total = 0, 0, 0
     for i, X, y in dataloader:
         X, y = X.to(device), y.to(device)
+        fgsm = FGSM(model, X, y)
+
+        optimizer.zero_grad()
 
         y_pred = model(X)
         clean_loss = loss_fn(y_pred, y)
-
-        fgsm = FGSM(model, X, y)
+        
         fgsm_pred = model(fgsm)
         fgsm_loss = loss_fn(fgsm_pred, y)
 
-        pgd = PGD(model, X, y)
-        pgd_pred = model(pgd)
-        pgd_loss = loss_fn(pgd_pred, y)
-
-        loss = clean_loss + fgsm_loss + pgd_loss
+        loss = clean_loss + fgsm_pred
         train_loss += loss.item()
 
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -75,7 +72,7 @@ def train_step(model: nn.Module,
         train_score += (y_pred_class == y).sum().item()
         train_total += len(y)
 
-    train_loss = train_loss / len(dataloader)
+    train_loss = train_loss
     train_score = train_score / train_total
 
     return train_loss, train_score
@@ -97,26 +94,15 @@ def test_step(model: nn.Module,
             X, y = X.to(device), y.to(device)
 
             y_pred = model(X)
-            clean_loss = loss_fn(y_pred, y)
-
-            fgsm = FGSM(model, X, y)
-            fgsm_pred = model(fgsm)
-            fgsm_loss = loss_fn(fgsm_pred, y)
-
-            pgd = PGD(model, X, y)
-            pgd_pred = model(pgd)
-            pgd_loss = loss_fn(pgd_pred, y)
-
-            loss = clean_loss + fgsm_loss + pgd_loss
+            loss = loss_fn(y_pred, y)
             test_loss += loss.item()
             
             y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
             test_score += (y_pred_class == y).sum().item()
             test_total += len(y)
 
-    test_loss = test_loss / len(dataloader)
+    test_loss = test_loss
     test_score = test_score / test_total
-    
     return test_loss, test_score
 
 

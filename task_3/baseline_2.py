@@ -24,7 +24,7 @@ def main():
     )
 
     batch_size = 128
-    train_data, test_data = torch.utils.data.random_split(data, [90000, 10000])
+    train_data, test_data = torch.utils.data.random_split(data, [99000, 1000])
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=2)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True, num_workers=2)
 
@@ -60,7 +60,7 @@ def main():
 
     # Training model
     train(model=model,
-        train_dataloader=train_loader,
+        train_dataloader=test_loader,
         optimizer=optimizer,
         loss_fn=criterion,
         device=DEVICE,
