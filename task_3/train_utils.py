@@ -1,12 +1,12 @@
+import copy
+import os
+
+import pandas as pd
 import torch
 import torch.nn as nn
-from tqdm import tqdm
-import pandas as pd
-import os
-import copy
-from torchvision.transforms import v2
-
 from adversary import *
+from torchvision.transforms import v2
+from tqdm import tqdm
 
 """
 source: https://github.com/jeffheaton/app_deep_learning/blob/main/t81_558_class_03_4_early_stop.ipynb
@@ -278,9 +278,7 @@ def train(
         ]
 
         # Saving training results
-        save_training_results(
-            results, results_dir_path, f"training_results_epoch_{epoch+1}.csv"
-        )
+        save_training_results(results, results_dir_path, f"training_results.csv")
         if (epoch + 1) % save_n_epochs == 0 and not (epoch + 1 == epochs):
             save_model(model, models_dir_path, f"model_epoch_{epoch+1}")
 
