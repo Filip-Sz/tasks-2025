@@ -53,6 +53,7 @@ def train_step(model: nn.Module,
     for i, X, y in dataloader:
         X, y = X.to(device), y.to(device)
         fgsm = FGSM(model, X, y)
+        pgd = PGD(model, X, y)
 
         optimizer.zero_grad()
 
@@ -62,7 +63,10 @@ def train_step(model: nn.Module,
         fgsm_pred = model(fgsm)
         fgsm_loss = loss_fn(fgsm_pred, y)
 
-        loss = 0.5*clean_loss + 0.5*fgsm_loss
+        pgd_pred = model(pgd)
+        pgd_loss = loss_fn(pgd_pred, y)
+
+        loss = 0.5*clean_loss + 0.25*fgsm_loss + 0.25*pgd_loss
         train_loss += loss.item()
 
         loss.backward()
@@ -147,7 +151,9 @@ def train(model: nn.Module,
     early_stopping_used = False
     use_early_stopping = ((test_dataloader is not None) and use_early_stopping)
 
-    for epoch in tqdm(range(epochs)):
+    progress = tqdm(range(epochs))
+
+    for epoch in progress:
         train_loss, train_score = train_step(model=model,
                                            dataloader=train_dataloader,
                                            loss_fn=loss_fn,
@@ -164,14 +170,14 @@ def train(model: nn.Module,
         
         if verbose:
             if not test_dataloader == None:
-                print(
+                progress.set_description(
                     f"Epoch: {epoch+1} | "
                     f"train_loss: {train_loss:.4f} | "
                     f"train_score: {train_score:.4f} | "
                     f"test_loss: {test_loss:.4f} | "
                     f"test_score: {test_score:.4f}")
             else:
-                print(
+                progress.set_description(
                     f"Epoch: {epoch+1} | "
                     f"train_loss: {train_loss:.4f} | "
                     f"train_score: {train_score:.4f}")
