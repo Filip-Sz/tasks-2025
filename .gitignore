@@ -2,3 +2,4 @@
 *.pt
 
 task_1/data/
+__pycache__
