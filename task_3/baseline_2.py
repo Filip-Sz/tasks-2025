@@ -13,7 +13,7 @@ def main():
     with open("config.yaml", "r") as file:
         config = yaml.safe_load(file)
 
-    DEVICE = "cuda"
+    DEVICE = "cpu"
 
     model = resnet50(weights='IMAGENET1K_V1')
     model.fc = torch.nn.Linear(model.fc.weight.shape[1], 10)
@@ -27,9 +27,10 @@ def main():
         ]
     )
 
-    train_data, test_data = torch.utils.data.random_split(data, [99000, 1000])
-    train_loader = DataLoader(train_data, batch_size=config["batch_size"], shuffle=True, num_workers=os.cpu_count())
-    test_loader = DataLoader(test_data, batch_size=config["batch_size"], shuffle=True, num_workers=os.cpu_count())
+    # train_data, test_data = torch.utils.data.random_split(data, [99000, 1000])
+    train_data, test_data = torch.utils.data.random_split(data, [99900, 100])
+    train_loader = DataLoader(train_data, batch_size=config["batch_size"], shuffle=True, num_workers=16)
+    test_loader = DataLoader(test_data, batch_size=config["batch_size"], shuffle=True, num_workers=16)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
     criterion = torch.nn.CrossEntropyLoss()
@@ -61,7 +62,7 @@ def main():
 
     # Training model
     train(model=model,
-        train_dataloader=train_loader,
+        train_dataloader=test_loader,
         optimizer=optimizer,
         loss_fn=criterion,
         device=DEVICE,

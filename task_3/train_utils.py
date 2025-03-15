@@ -49,8 +49,10 @@ def train_step(model: nn.Module,
                device: str):
     
     model.train()
-    train_loss, train_score, train_total = 0, 0, 0
-    for i, X, y in dataloader:
+    train_loss, train_total = 0, 0
+    train_score, train_score_fgsm, train_score_pgd = 0, 0, 0
+    clean_loss_total, fgsm_loss_total, pgd_loss_total = 0, 0, 0
+    for _, X, y in dataloader:
         X, y = X.to(device), y.to(device)
         fgsm = FGSM(model, X, y)
         pgd = PGD(model, X, y)
@@ -68,18 +70,22 @@ def train_step(model: nn.Module,
 
         loss = 0.5*clean_loss + 0.25*fgsm_loss + 0.25*pgd_loss
         train_loss += loss.item()
+        clean_loss_total += clean_loss
+        fgsm_loss_total += fgsm_loss
+        pgd_loss_total += pgd_loss
 
         loss.backward()
         optimizer.step()
 
-        y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
-        train_score += (y_pred_class == y).sum().item()
+        train_score += (torch.argmax(y_pred, dim=1) == y).sum().item()
+        train_score_fgsm += (torch.argmax(fgsm_pred, dim=1) == y).sum().item()
+        train_score_pgd += (torch.argmax(pgd_pred, dim=1) == y).sum().item()
         train_total += len(y)
 
     train_loss = train_loss
     train_score = train_score / train_total
 
-    return train_loss, train_score
+    return train_loss, train_score, train_score_fgsm, train_score_pgd, clean_loss_total, fgsm_loss_total, pgd_loss_total
 
 
 '''
@@ -91,23 +97,40 @@ def test_step(model: nn.Module,
               device: str):
     
     model.eval() 
-    test_loss, test_score, test_total = 0, 0, 0
-    
-    with torch.inference_mode():
-        for i, X, y in dataloader:
-            X, y = X.to(device), y.to(device)
+    test_loss, test_total = 0, 0
+    test_score, test_score_fgsm, test_score_pgd = 0, 0, 0
+    clean_loss_total, fgsm_loss_total, pgd_loss_total = 0, 0, 0
+    # with torch.inference_mode():
+    for _, X, y in dataloader:
+        X, y = X.to(device), y.to(device)
+        fgsm = FGSM(model, X, y)
+        pgd = PGD(model, X, y)
 
-            y_pred = model(X)
-            loss = loss_fn(y_pred, y)
-            test_loss += loss.item()
-            
-            y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
-            test_score += (y_pred_class == y).sum().item()
-            test_total += len(y)
+        y_pred = model(X)
+        clean_loss = loss_fn(y_pred, y)
+
+        fgsm_pred = model(fgsm)
+        fgsm_loss = loss_fn(fgsm_pred, y)
+
+        pgd_pred = model(pgd)
+        pgd_loss = loss_fn(pgd_pred, y)
+
+        loss = 0.5*clean_loss + 0.25*fgsm_loss + 0.25*pgd_loss
+        test_loss += loss.item()
+        clean_loss_total += clean_loss
+        fgsm_loss_total += fgsm_loss
+        pgd_loss_total += pgd_loss
+
+        test_score += (torch.argmax(y_pred, dim=1) == y).sum().item()
+        test_score_fgsm += (torch.argmax(fgsm_pred, dim=1) == y).sum().item()
+        test_score_pgd += (torch.argmax(pgd_pred, dim=1) == y).sum().item()
+        test_total += len(y)
 
     test_loss = test_loss
     test_score = test_score / test_total
-    return test_loss, test_score
+    
+    return test_loss, test_score, test_score_fgsm, test_score_pgd, clean_loss_total, fgsm_loss_total, pgd_loss_total
+
 
 
 def save_model(model, save_path, file_name):
@@ -154,13 +177,13 @@ def train(model: nn.Module,
     progress = tqdm(range(epochs))
 
     for epoch in progress:
-        train_loss, train_score = train_step(model=model,
+        train_loss, train_score, train_score_fgsm, train_score_pgd, train_clean_loss, train_fgsm_loss, train_pgd_loss = train_step(model=model,
                                            dataloader=train_dataloader,
                                            loss_fn=loss_fn,
                                            optimizer=optimizer,
                                            device=device)
         if not test_dataloader == None:
-            test_loss, test_score = test_step(model=model,
+            test_loss, test_score, test_score_fgsm, test_score_pgd, test_clean_loss, test_fgsm_loss, test_pgd_loss = test_step(model=model,
                                             dataloader=test_dataloader,
                                             loss_fn=loss_fn,
                                             device=device)
@@ -172,21 +195,19 @@ def train(model: nn.Module,
             if not test_dataloader == None:
                 progress.set_description(
                     f"Epoch: {epoch+1} | "
-                    f"train_loss: {train_loss:.4f} | "
-                    f"train_score: {train_score:.4f} | "
-                    f"test_loss: {test_loss:.4f} | "
-                    f"test_score: {test_score:.4f}")
+                    f"test_score: {test_score:.4f} | "
+                    f"test_score_fgsm: {test_score_fgsm:.4f} | "
+                    f"test_score_pgd: {test_score_pgd:.4f}")
             else:
                 progress.set_description(
                     f"Epoch: {epoch+1} | "
-                    f"train_loss: {train_loss:.4f} | "
                     f"train_score: {train_score:.4f}")
         
         results.loc[len(results.index)] = [int(epoch+1), train_loss, train_score, test_loss, test_score]
 
         # Saving training results
+        save_training_results(results, results_dir_path, f'training_results_epoch_{epoch+1}.csv')
         if (epoch+1) % save_n_epochs == 0 and not(epoch+1 == epochs):
-            save_training_results(results, results_dir_path, f'training_results_epoch_{epoch+1}.csv')
             save_model(model, models_dir_path, f'model_epoch_{epoch+1}')
 
         if use_early_stopping and early_stop(model, test_loss):
