@@ -19,15 +19,13 @@ data.transform = transforms.Compose(
 )
 
 train_data, test_data = torch.utils.data.random_split(data, [90000, 10000])
-train_loader = DataLoader(train_data, batch_size=256, shuffle=True, num_workers=2)
-rest_loader = DataLoader(test_data, batch_size=256, shuffle=True, num_workers=2)
+train_loader = DataLoader(train_data, batch_size=100, shuffle=True, num_workers=2)
+test_loader = DataLoader(test_data, batch_size=100, shuffle=True, num_workers=2)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 criterion = torch.nn.CrossEntropyLoss()
 
-n_epochs = 10
-
-n_epochs = 3
+n_epochs = 50
 
 model.to(DEVICE)
 for epoch in range(n_epochs):
@@ -35,8 +33,10 @@ for epoch in range(n_epochs):
     correct = 0
     total = 0
 
+    test_running_loss = 0
     test_correct = 0
     test_total = 0
+
 
     model.train()
     for i, x, y in train_loader:
@@ -56,12 +56,13 @@ for epoch in range(n_epochs):
 
     model.eval()
     with torch.no_grad():
-        for i, x, y in train_loader:
+        for i, x, y in test_loader:
             x = x.to(DEVICE)
             y = y.to(DEVICE)
-            correct += (torch.argmax(pred, dim=1) == y).sum().item()
-            total += len(y)
-            running_loss += loss.item()
+            test_correct += (torch.argmax(pred, dim=1) == y).sum().item()
+            test_total += len(y)
+            test_running_loss += loss.item()
+        
     
     print(f"{epoch:0>2} Loss: {running_loss:.3f} | Accuracy: {correct/total: .3f}")
 
