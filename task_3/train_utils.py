@@ -90,6 +90,8 @@ def train_step(
 
     train_loss = train_loss
     train_score = train_score / train_total
+    train_score_fgsm = train_score_fgsm / train_total
+    train_score_pgd = train_score_pgd / train_total
 
     return (
         train_loss,
@@ -146,6 +148,8 @@ def test_step(
 
     test_loss = test_loss
     test_score = test_score / test_total
+    test_score_fgsm = test_score_fgsm / test_total
+    test_score_pgd = test_score_pgd / test_total
 
     return (
         test_loss,
