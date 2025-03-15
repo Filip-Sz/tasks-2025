@@ -1,19 +1,28 @@
 import torch
 import typing
-from torchvision.transforms import Compose
+from torchvision.transforms import Compose, Normalize
+
+MEAN = torch.Tensor([0.2980, 0.2962, 0.2987])
+STD = torch.Tensor([0.2886, 0.2875, 0.2889])
+
+unnorm = Compose([Normalize(mean = [ 0., 0., 0. ],
+                                std = 1/STD),
+                    Normalize(mean = -MEAN,
+                                std = [ 1., 1., 1. ]),
+                    ])
+norm = Normalize(mean=MEAN, std=STD)
 
 def FGSM(
      model: torch.nn.Module,
      x: torch.Tensor,
      y: torch.Tensor,
      epsilon: float = 1/255,
-     unnormalize: Compose = Compose([]),
  ) -> torch.Tensor: 
     was_training = model.training
     model.eval()
     x = x.clone().detach()
 
-    x = unnormalize(x)
+    x = unnorm(x)
 
     x.requires_grad = True
 
@@ -27,7 +36,7 @@ def FGSM(
     if was_training:
         model.train()
 
-    return perturbated_img.requires_grad_(False)
+    return norm(perturbated_img.requires_grad_(False))
 
 
 def PGD(

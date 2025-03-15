@@ -13,15 +13,6 @@ from tqdm import tqdm
 source: https://github.com/jeffheaton/app_deep_learning/blob/main/t81_558_class_03_4_early_stop.ipynb
 """
 
-MEAN = torch.Tensor([0.2980, 0.2962, 0.2987])
-STD = torch.Tensor([0.2886, 0.2875, 0.2889])
-
-unnorm = v2.Compose([v2.Normalize(mean = [ 0., 0., 0. ],
-                                std = 1/STD),
-                     v2.Normalize(mean = -MEAN,
-                                std = [ 1., 1., 1. ]),
-                    ])
-
 
 class EarlyStopping:
     def __init__(self, patience=5, min_delta=0):
@@ -72,7 +63,7 @@ def train_step(
         X, y = X.to(device), y.to(device)
 
         pgd = PGD(model, X, y, n_iters=2)
-        fgsm = FGSM(model, X, y, epsilon=2/255, unnormalize=unnorm)
+        fgsm = FGSM(model, X, y, epsilon=2/255)
 
         optimizer.zero_grad()
 
@@ -135,7 +126,7 @@ def test_step(
     for _, X, y in dataloader:
         X, y = X.to(device), y.to(device)
         pgd = PGD(model, X, y, n_iters=2)
-        fgsm = FGSM(model, X, y, epsilon=2/255, unnormalize=unnorm)
+        fgsm = FGSM(model, X, y, epsilon=2/255)
 
         y_pred = model(X)
         clean_loss = loss_fn(y_pred, y)
