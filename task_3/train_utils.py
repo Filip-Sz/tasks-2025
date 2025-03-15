@@ -76,7 +76,7 @@ def train_step(model: nn.Module,
         train_total += len(y)
 
     train_loss = train_loss / len(dataloader)
-    train_score = train_score / len(train_total)
+    train_score = train_score / train_total
 
     return train_loss, train_score
 
@@ -115,7 +115,8 @@ def test_step(model: nn.Module,
             test_total += len(y)
 
     test_loss = test_loss / len(dataloader)
-    test_score = test_score / len(test_total)
+    test_score = test_score / test_total
+    
     return test_loss, test_score
 
 

@@ -23,7 +23,7 @@ def main():
         ]
     )
 
-    batch_size = 64
+    batch_size = 128
     train_data, test_data = torch.utils.data.random_split(data, [90000, 10000])
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=2)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True, num_workers=2)

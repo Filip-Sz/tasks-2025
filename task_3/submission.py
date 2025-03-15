@@ -1,7 +1,7 @@
 import requests
 import torch
 import argparse
-from token import TOKEN
+from tokenn import TOKEN
 
 URL = "http://149.156.182.9:6060/task-3/submit"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
