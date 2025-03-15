@@ -62,7 +62,7 @@ def train_step(model: nn.Module,
         fgsm_pred = model(fgsm)
         fgsm_loss = loss_fn(fgsm_pred, y)
 
-        loss = clean_loss + fgsm_pred
+        loss = 0.5*clean_loss + 0.5*fgsm_loss
         train_loss += loss.item()
 
         loss.backward()
