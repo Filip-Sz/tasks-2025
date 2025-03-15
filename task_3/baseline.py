@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from torchvision.models import resnet50
 from taskdata import *
 from adversary import *
+from datetime.datetime import now
 
 DEVICE = "cuda"
 
@@ -27,7 +28,7 @@ criterion = torch.nn.CrossEntropyLoss()
 
 n_epochs = 10
 
-n_epochs = 3
+start = now()
 
 model.to(DEVICE)
 for epoch in range(n_epochs):
@@ -65,4 +66,8 @@ for epoch in range(n_epochs):
     
     print(f"{epoch:0>2} Loss: {running_loss:.3f} | Accuracy: {correct/total: .3f}")
 
+end = now()
+
 torch.save(model.state_dict(), 'models/baseline.pt')
+
+print(f"Total training time: {end-start}")
