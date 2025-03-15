@@ -6,6 +6,8 @@ import os
 import copy
 from torchvision.transforms import v2
 
+from adversary import *
+
 '''
 source: https://github.com/jeffheaton/app_deep_learning/blob/main/t81_558_class_03_4_early_stop.ipynb
 '''
@@ -47,23 +49,34 @@ def train_step(model: nn.Module,
                device: str):
     
     model.train()
-    train_loss, train_score = 0, 0
+    train_loss, train_score, train_total = 0, 0, 0
     for i, X, y in dataloader:
         X, y = X.to(device), y.to(device)
-        y_pred = model(X)
 
-        loss = loss_fn(y_pred, y)
-        train_loss += loss.item() 
+        y_pred = model(X)
+        clean_loss = loss_fn(y_pred, y)
+
+        fgsm = FGSM(model, X, y)
+        fgsm_pred = model(fgsm)
+        fgsm_loss = loss_fn(fgsm_pred, y)
+
+        pgd = PGD(model, X, y)
+        pgd_pred = model(pgd)
+        pgd_loss = loss_fn(pgd_pred, y)
+
+        loss = clean_loss + fgsm_loss + pgd_loss
+        train_loss += loss.item()
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
-        train_score += (y_pred_class == y).sum().item()/len(y_pred)
+        train_score += (y_pred_class == y).sum().item()
+        train_total += len(y)
 
     train_loss = train_loss / len(dataloader)
-    train_score = train_score / len(dataloader)
+    train_score = train_score / len(train_total)
 
     return train_loss, train_score
 
@@ -77,22 +90,32 @@ def test_step(model: nn.Module,
               device: str):
     
     model.eval() 
-    test_loss, test_score = 0, 0
+    test_loss, test_score, test_total = 0, 0, 0
     
     with torch.inference_mode():
         for i, X, y in dataloader:
             X, y = X.to(device), y.to(device)
-    
-            test_pred_logits = model(X)
 
-            loss = loss_fn(test_pred_logits, y)
+            y_pred = model(X)
+            clean_loss = loss_fn(y_pred, y)
+
+            fgsm = FGSM(model, X, y)
+            fgsm_pred = model(fgsm)
+            fgsm_loss = loss_fn(fgsm_pred, y)
+
+            pgd = PGD(model, X, y)
+            pgd_pred = model(pgd)
+            pgd_loss = loss_fn(pgd_pred, y)
+
+            loss = clean_loss + fgsm_loss + pgd_loss
             test_loss += loss.item()
             
-            test_pred_labels = test_pred_logits.argmax(dim=1)
-            test_score += ((test_pred_labels == y).sum().item()/len(test_pred_labels))
-            
+            y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
+            test_score += (y_pred_class == y).sum().item()
+            test_total += len(y)
+
     test_loss = test_loss / len(dataloader)
-    test_score = test_score / len(dataloader)
+    test_score = test_score / len(test_total)
     return test_loss, test_score
 
 
