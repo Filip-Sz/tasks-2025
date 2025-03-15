@@ -1,28 +1,33 @@
 import torch
 import typing
+from torchvision.transforms import Compose
 
 def FGSM(
      model: torch.nn.Module,
      x: torch.Tensor,
      y: torch.Tensor,
-     epsilon: float = 1/255
+     epsilon: float = 1/255,
+     unnormalize: Compose = Compose([]),
  ) -> torch.Tensor: 
-     was_training = model.training
-     model.eval()
-     x = x.clone().detach()
-     x.requires_grad = True
- 
-     logits = model(x)
-     loss = torch.nn.CrossEntropyLoss()(logits, y)
-     x_grad = torch.autograd.grad(loss, x)[0].sign()
- 
-     perturbation = x_grad*epsilon
-     perturbated_img = torch.clamp(x + perturbation, 0, 1).detach()
- 
-     if was_training:
-         model.train()
- 
-     return perturbated_img.requires_grad_(False)
+    was_training = model.training
+    model.eval()
+    x = x.clone().detach()
+
+    x = unnormalize(x)
+
+    x.requires_grad = True
+
+    logits = model(x)
+    loss = torch.nn.CrossEntropyLoss()(logits, y)
+    x_grad = torch.autograd.grad(loss, x)[0].sign()
+
+    perturbation = x_grad*epsilon
+    perturbated_img = torch.clamp(x + perturbation, 0, 1).detach()
+
+    if was_training:
+        model.train()
+
+    return perturbated_img.requires_grad_(False)
 
 
 def PGD(
