@@ -1,1 +1,4 @@
+.venv
+*.pt
+
 task_1/data/
