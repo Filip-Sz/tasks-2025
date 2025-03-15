@@ -19,8 +19,8 @@ data.transform = transforms.Compose(
 )
 
 train_data, test_data = torch.utils.data.random_split(data, [90000, 10000])
-train_loader = DataLoader(train_data, batch_size=100, shuffle=True, num_workers=2)
-rest_loader = DataLoader(test_data, batch_size=100, shuffle=True, num_workers=2)
+train_loader = DataLoader(train_data, batch_size=256, shuffle=True, num_workers=2)
+rest_loader = DataLoader(test_data, batch_size=256, shuffle=True, num_workers=2)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 criterion = torch.nn.CrossEntropyLoss()

@@ -1,6 +1,6 @@
 from typing import Tuple
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
 
@@ -24,10 +24,19 @@ class TaskDataset(Dataset):
     def __len__(self):
         return len(self.ids)
     
-t = transforms.Compose(
+T = transforms.Compose(
     [
         transforms.Resize((32, 32)),
         transforms.Lambda(lambda x: x.convert("RGB")),
         transforms.ToTensor(),
     ]
 )
+
+def get_data_loaders(test_frac=0.1, PATH='data.pt'):
+    data = torch.load('data.pt', weights_only=False)
+
+    train_data, test_data = torch.utils.data.random_split(data, [len(data)-int(test_frac*len(data)), int(test_frac*len(data))])
+    train_loader = DataLoader(train_data, batch_size=100, shuffle=True, num_workers=2)
+    test_loader = DataLoader(test_data, batch_size=100, shuffle=True, num_workers=2)
+
+    return train_loader, test_loader
