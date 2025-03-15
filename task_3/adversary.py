@@ -17,7 +17,7 @@ def FGSM(
     x_grad = torch.autograd.grad(loss, x)[0].sign()
 
     perturbation = x_grad*epsilon
-    perturbated_img = torch.clamp(x + perturbation, 0, 1)
+    perturbated_img = torch.clamp(x + perturbation.detach(), 0, 1).detach()
 
     if was_training:
         model.train()
