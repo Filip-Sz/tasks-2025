@@ -1,12 +1,13 @@
+import datetime
+import os
+
 import torch
+import yaml
+from adversary import *
+from taskdata import *
 from torch.utils.data import DataLoader
 from torchvision.models import resnet50
-from taskdata import *
-from adversary import *
-import os
 from train_utils import *
-import datetime
-import yaml
 
 
 def main():
@@ -30,10 +31,16 @@ def main():
     # train_data, test_data = torch.utils.data.random_split(data, [99000, 1000])
     train_data, test_data = torch.utils.data.random_split(data, [99990, 10])
     train_loader = DataLoader(
-        train_data, batch_size=config["batch_size"], shuffle=True, num_workers=16
+        train_data,
+        batch_size=config["batch_size"],
+        shuffle=True,
+        num_workers=config["num_workers"],
     )
     test_loader = DataLoader(
-        test_data, batch_size=config["batch_size"], shuffle=True, num_workers=16
+        test_data,
+        batch_size=config["batch_size"],
+        shuffle=True,
+        num_workers=config["num_workers"],
     )
 
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
