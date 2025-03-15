@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import copy
 from torchvision.transforms import v2
+import random
 
 from adversary import *
 
@@ -60,8 +61,10 @@ def train_step(
     clean_loss_total, fgsm_loss_total, pgd_loss_total = 0, 0, 0
     for _, X, y in dataloader:
         X, y = X.to(device), y.to(device)
-        fgsm = FGSM(model, X, y)
-        pgd = PGD(model, X, y)
+
+        alpha=random.choice([1/256, 2/256, 3/256, 4/256])
+        pgd = PGD(model, X, y, alpha=alpha, epsilon=2*alpha, n_iters=random.choice(list(range(1,6))))
+        fgsm = FGSM(model, X, y, epsilon=random.choice([1/256, 2/256, 3/256, 4/256]))
 
         optimizer.zero_grad()
 
@@ -121,8 +124,9 @@ def test_step(
     # with torch.inference_mode():
     for _, X, y in dataloader:
         X, y = X.to(device), y.to(device)
-        fgsm = FGSM(model, X, y)
-        pgd = PGD(model, X, y)
+        alpha=random.choice([1/256, 2/256, 3/256, 4/256])
+        pgd = PGD(model, X, y, alpha=alpha, epsilon=2*alpha, n_iters=random.choice(list(range(1,6))))
+        fgsm = FGSM(model, X, y, epsilon=random.choice([1/256, 2/256, 3/256, 4/256]))
 
         y_pred = model(X)
         clean_loss = loss_fn(y_pred, y)
