@@ -6,12 +6,8 @@ import yaml
 from adversary import *
 from taskdata import *
 from torch.utils.data import DataLoader
-from torchvision.models import resnet18 as resnet
+from torchvision.models import resnet18, resnet34, resnet50
 from train_utils import *
-
-
-MEAN = [0.2980, 0.2962, 0.2987]
-STD = [0.2886, 0.2875, 0.2889]
 
 
 def main():
@@ -20,7 +16,14 @@ def main():
 
     DEVICE = "cuda"
 
-    model = resnet(weights="IMAGENET1K_V1")
+    if config['renet'] == '18':
+        model = resnet18(weights="IMAGENET1K_V1")
+    elif config['renet'] == '34':
+        model = resnet34(weights="IMAGENET1K_V1")
+    elif config['renet'] == '50':
+        model = resnet50(weights="IMAGENET1K_V1")
+    else:
+        raise ValueError("Only resnet18, resne43 and resnt50 are accetable")
     model.fc = torch.nn.Linear(model.fc.weight.shape[1], 10)
 
     data = torch.load("data.pt", weights_only=False)
@@ -29,7 +32,6 @@ def main():
             transforms.Resize((32, 32)),
             transforms.Lambda(lambda x: x.convert("RGB")),
             transforms.ToTensor(),
-            transforms.Normalize(mean=MEAN, std=STD),
         ]
     )
 
@@ -72,6 +74,7 @@ def main():
         f"use_early_stopping: {use_early_stopping}",
         f"patience: {patience}",
         f"min_delta: {min_delta}",
+        f"resnet: {config['resnet']}",
     ]
 
     with open(os.path.join(save_dir, "hyperparams.txt"), "w") as f:
