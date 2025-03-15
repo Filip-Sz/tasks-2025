@@ -16,11 +16,11 @@ def main():
 
     DEVICE = "cuda"
 
-    if config['renet'] == '18':
+    if config['resnet'] == '18':
         model = resnet18(weights="IMAGENET1K_V1")
-    elif config['renet'] == '34':
+    elif config['resnet'] == '34':
         model = resnet34(weights="IMAGENET1K_V1")
-    elif config['renet'] == '50':
+    elif config['resnet'] == '50':
         model = resnet50(weights="IMAGENET1K_V1")
     else:
         raise ValueError("Only resnet18, resne43 and resnt50 are accetable")
