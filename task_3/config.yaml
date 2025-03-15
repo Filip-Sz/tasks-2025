@@ -6,4 +6,4 @@ use_early_stopping: True
 patience: 5
 min_delta: 0
 save_n_epochs: 5
-num_workers: 4
+num_workers: 16

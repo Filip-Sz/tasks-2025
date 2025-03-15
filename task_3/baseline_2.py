@@ -28,8 +28,8 @@ def main():
         ]
     )
 
-    # train_data, test_data = torch.utils.data.random_split(data, [99000, 1000])
-    train_data, test_data = torch.utils.data.random_split(data, [99990, 10])
+    train_data, test_data = torch.utils.data.random_split(data, [99000, 1000])
+    # train_data, test_data = torch.utils.data.random_split(data, [99990, 10])
     train_loader = DataLoader(
         train_data,
         batch_size=config["batch_size"],
@@ -75,7 +75,7 @@ def main():
     # Training model
     train(
         model=model,
-        train_dataloader=test_loader,
+        train_dataloader=train_loader,
         optimizer=optimizer,
         loss_fn=criterion,
         device=DEVICE,
