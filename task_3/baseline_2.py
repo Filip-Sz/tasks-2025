@@ -6,7 +6,7 @@ import yaml
 from adversary import *
 from taskdata import *
 from torch.utils.data import DataLoader
-from torchvision.models import resnet50
+from torchvision.models import resnet18 as resnet
 from train_utils import *
 
 
@@ -20,7 +20,7 @@ def main():
 
     DEVICE = "cuda"
 
-    model = resnet50(weights="IMAGENET1K_V1")
+    model = resnet(weights="IMAGENET1K_V1")
     model.fc = torch.nn.Linear(model.fc.weight.shape[1], 10)
 
     data = torch.load("data.pt", weights_only=False)
