@@ -10,6 +10,9 @@ from torchvision.models import resnet50
 from train_utils import *
 
 
+MEAN = [0.2980, 0.2962, 0.2987]
+STD = [0.2886, 0.2875, 0.2889]
+
 def main():
     with open("config.yaml", "r") as file:
         config = yaml.safe_load(file)
@@ -26,8 +29,8 @@ def main():
             transforms.Lambda(lambda x: x.convert("RGB")),
             transforms.ToTensor(),
             transforms.Normalize(
-                mean = [0.2980, 0.2962, 0.2987],
-                std = [0.2886, 0.2875, 0.2889]
+                mean = MEAN,
+                std = STD
             )
         ]
     )
