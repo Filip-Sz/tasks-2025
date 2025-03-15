@@ -25,6 +25,10 @@ def main():
             transforms.Resize((32, 32)),
             transforms.Lambda(lambda x: x.convert("RGB")),
             transforms.ToTensor(),
+            transforms.Normalize(
+                mean = [0.2980, 0.2962, 0.2987],
+                std = [0.2886, 0.2875, 0.2889]
+            )
         ]
     )
 
