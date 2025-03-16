@@ -33,8 +33,7 @@ def PGD(
     model: torch.nn.Module,
     x: torch.Tensor,
     y: torch.Tensor,
-    epsilon: float = 4 / 255,
-    alpha: float = 2 / 255,
+    epsilon: float = 2 / 255,
     n_iters: int = 1,
     random_init: bool = False,
 ) -> torch.Tensor:
@@ -42,11 +41,11 @@ def PGD(
     model.eval()
     x = x.clone().detach()
     with torch.no_grad():
-        x_min = torch.clamp(x - epsilon, min=0)
-        x_max = torch.clamp(x + epsilon, max=1)
+        x_min = torch.clamp(x - 2*epsilon, min=0)
+        x_max = torch.clamp(x + 2*epsilon, max=1)
 
         if random_init:
-            x = x + torch.empty_like(x).uniform_(-epsilon, epsilon)
+            x = x + torch.empty_like(x).uniform_(-2*epsilon, 2*epsilon)
             x.clamp_(x_min, x_max)
 
     for _ in range(n_iters):
@@ -55,7 +54,7 @@ def PGD(
         loss = torch.nn.CrossEntropyLoss()(logits, y)
         with torch.no_grad():
             x_grad = torch.autograd.grad(loss, x)[0]
-            x = x.detach() + alpha * x_grad.sign()
+            x = x.detach() + epsilon * x_grad.sign()
             x.clamp_(x_min, x_max)
             x = x.detach()
 

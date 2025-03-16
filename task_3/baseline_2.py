@@ -29,6 +29,7 @@ def main():
     data = torch.load("data.pt", weights_only=False, map_location=torch.device(DEVICE))
     data.transform = transforms.Compose(
         [
+            transforms.RandomRotation(5),
             transforms.Resize((32, 32)),
             transforms.Lambda(lambda x: x.convert("RGB")),
             transforms.ToTensor(),
