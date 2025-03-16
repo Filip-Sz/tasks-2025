@@ -26,7 +26,7 @@ def main():
         raise ValueError("Only resnet18, resne43 and resnt50 are accetable")
     model.fc = torch.nn.Linear(model.fc.weight.shape[1], 10)
 
-    data = torch.load("data.pt", weights_only=False)
+    data = torch.load("data.pt", weights_only=False, map_location=DEVICE)
     data.transform = transforms.Compose(
         [
             transforms.Resize((32, 32)),
