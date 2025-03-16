@@ -75,7 +75,7 @@ def train_step(
         pgd_pred = model(pgd)
         pgd_loss = loss_fn(pgd_pred, y)
 
-        loss = 0.2 * clean_loss + 0.4 * fgsm_loss + 0.4 * pgd_loss
+        loss = 0.3 * clean_loss + 0.7 * fgsm_loss + 0.0 * pgd_loss
         train_loss += loss.item()
         clean_loss_total += clean_loss.item()
         fgsm_loss_total += fgsm_loss.item()
@@ -136,7 +136,7 @@ def test_step(
         pgd_pred = model(pgd)
         pgd_loss = loss_fn(pgd_pred, y)
 
-        loss = 0.2 * clean_loss + 0.4 * fgsm_loss + 0.4 * pgd_loss
+        loss = 0.3 * clean_loss + 0.7 * fgsm_loss + 0.0 * pgd_loss
         test_loss += loss.item()
         clean_loss_total += clean_loss.item()
         fgsm_loss_total += fgsm_loss.item()
