@@ -53,6 +53,9 @@ def main():
     optimizer = torch.optim.Adam(
         model.parameters(), lr=config["lr"], weight_decay=config["weight_decay"]
     )
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer, step_size=1, gamma=0.9
+    )
     criterion = torch.nn.CrossEntropyLoss()
 
     model.to(DEVICE)
@@ -68,6 +71,7 @@ def main():
 
     lines = [
         f"Optimizer: {type(optimizer).__name__}",
+        f"Scheduler: {type(lr_scheduler).__name__}",
         f"Device: {DEVICE}",
         f"epochs: {num_epochs}",
         f'Learning rate: {optimizer.state_dict()["param_groups"][0]["lr"]}',
@@ -87,6 +91,7 @@ def main():
         model=model,
         train_dataloader=train_loader,
         optimizer=optimizer,
+        scheduler=lr_scheduler,
         loss_fn=criterion,
         device=DEVICE,
         test_dataloader=test_loader,

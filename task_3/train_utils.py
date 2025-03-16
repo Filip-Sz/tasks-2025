@@ -175,6 +175,7 @@ def train(
     model: nn.Module,
     train_dataloader: torch.utils.data.DataLoader,
     optimizer: torch.optim.Optimizer,
+    scheduler: torch.optim.lr_scheduler,
     loss_fn: nn.Module,
     device: str,
     test_dataloader: torch.utils.data.DataLoader = None,
@@ -235,6 +236,7 @@ def train(
             optimizer=optimizer,
             device=device,
         )
+        scheduler.step()
         if not test_dataloader == None:
             (
                 test_loss,
