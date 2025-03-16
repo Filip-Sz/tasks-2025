@@ -54,7 +54,7 @@ def main():
         model.parameters(), lr=config["lr"], weight_decay=config["weight_decay"]
     )
     lr_scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer, step_size=1, gamma=0.9
+        optimizer, step_size=1, gamma=config["lr_scheduler_gamma"]
     )
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -81,6 +81,7 @@ def main():
         f"patience: {patience}",
         f"min_delta: {min_delta}",
         f"resnet: {config['resnet']}",
+        f"lr_scheduler_gamma: {config['lr_scheduler_gamma']}",
     ]
 
     with open(os.path.join(save_dir, "hyperparams.txt"), "w") as f:
