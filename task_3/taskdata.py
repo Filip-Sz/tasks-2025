@@ -28,11 +28,7 @@ T = transforms.Compose(
     [
         transforms.Resize((32, 32)),
         transforms.Lambda(lambda x: x.convert("RGB")),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean = [0.2980, 0.2962, 0.2987],
-            std = [0.2886, 0.2875, 0.2889]
-        )
+        transforms.ToTensor()
     ]
 )
 
@@ -42,11 +38,7 @@ def get_data_loaders(test_frac=0.1, PATH='data.pt'):
         [
             transforms.Resize((32, 32)),
             transforms.Lambda(lambda x: x.convert("RGB")),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean = [0.2980, 0.2962, 0.2987],
-                std = [0.2886, 0.2875, 0.2889]
-            )
+            transforms.ToTensor()
         ]
     )
     train_data, test_data = torch.utils.data.random_split(data, [len(data)-int(test_frac*len(data)), int(test_frac*len(data))])
