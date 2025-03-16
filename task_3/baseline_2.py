@@ -17,11 +17,11 @@ def main():
     DEVICE = "cuda"
 
     if config["resnet"] == "18":
-        model = resnet18(weights="IMAGENET1K_V1")
+        model = resnet18(weights=None)
     elif config["resnet"] == "34":
-        model = resnet34(weights="IMAGENET1K_V1")
+        model = resnet34(weights=None)
     elif config["resnet"] == "50":
-        model = resnet50(weights="IMAGENET1K_V1")
+        model = resnet50(weights=None)
     else:
         raise ValueError("Only resnet18, resne43 and resnt50 are accetable")
     model.fc = torch.nn.Linear(model.fc.weight.shape[1], 10)
