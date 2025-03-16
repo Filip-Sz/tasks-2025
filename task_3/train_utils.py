@@ -60,9 +60,9 @@ def train_step(
     train_score, train_score_fgsm, train_score_pgd = 0, 0, 0
     clean_loss_total, fgsm_loss_total, pgd_loss_total = 0, 0, 0
     for _, X, y in dataloader:
-
+        X, y = X.to(device), y.to(device)
         pgd = PGD(model, X, y, n_iters=2)
-        fgsm = FGSM(model, X, y, epsilon=2/255)
+        fgsm = FGSM(model, X, y, epsilon=2 / 255)
 
         optimizer.zero_grad()
 
@@ -123,8 +123,9 @@ def test_step(
     clean_loss_total, fgsm_loss_total, pgd_loss_total = 0, 0, 0
     # with torch.inference_mode():
     for _, X, y in dataloader:
+        X, y = X.to(device), y.to(device)
         pgd = PGD(model, X, y, n_iters=2)
-        fgsm = FGSM(model, X, y, epsilon=2/255)
+        fgsm = FGSM(model, X, y, epsilon=2 / 255)
 
         y_pred = model(X)
         clean_loss = loss_fn(y_pred, y)

@@ -16,17 +16,17 @@ def main():
 
     DEVICE = "cuda"
 
-    if config['resnet'] == '18':
+    if config["resnet"] == "18":
         model = resnet18(weights="IMAGENET1K_V1")
-    elif config['resnet'] == '34':
+    elif config["resnet"] == "34":
         model = resnet34(weights="IMAGENET1K_V1")
-    elif config['resnet'] == '50':
+    elif config["resnet"] == "50":
         model = resnet50(weights="IMAGENET1K_V1")
     else:
         raise ValueError("Only resnet18, resne43 and resnt50 are accetable")
     model.fc = torch.nn.Linear(model.fc.weight.shape[1], 10)
 
-    data = torch.load("data.pt", weights_only=False, map_location=DEVICE)
+    data = torch.load("data.pt", weights_only=False, map_location=torch.device(DEVICE))
     data.transform = transforms.Compose(
         [
             transforms.Resize((32, 32)),
@@ -50,7 +50,9 @@ def main():
         num_workers=config["num_workers"],
     )
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=config["lr"], weight_decay=config["weight_decay"]
+    )
     criterion = torch.nn.CrossEntropyLoss()
 
     model.to(DEVICE)
