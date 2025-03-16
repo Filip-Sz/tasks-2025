@@ -8,6 +8,10 @@ from adversary import *
 from torchvision.transforms import v2
 import random
 from tqdm import tqdm
+from torchvision.models import resnet18
+
+
+ADVERSARY_PATH = "training_logs/2025-03-16 03:54:27.025943/models/model_early_stopping"
 
 """
 source: https://github.com/jeffheaton/app_deep_learning/blob/main/t81_558_class_03_4_early_stop.ipynb
@@ -61,8 +65,8 @@ def train_step(
     clean_loss_total, fgsm_loss_total, pgd_loss_total = 0, 0, 0
     for _, X, y in dataloader:
         X, y = X.to(device), y.to(device)
-        pgd = PGD(model, X, y, n_iters=random.choice([1, 2, 3, 4, 5]), epsilon=random.choice([1, 2, 3, 4, 5])/255)
-        fgsm = FGSM(model, X, y, epsilon=random.choice([1, 2, 3, 4, 5])/255)
+        pgd = PGD(model, X, y, n_iters=random.choice([1, 2, 3, 4]), epsilon=random.choice([1, 2, 3, 4])/255)
+        fgsm = FGSM(model, X, y, epsilon=random.choice([1, 2, 3, 4])/255)
 
         optimizer.zero_grad()
 
@@ -75,7 +79,7 @@ def train_step(
         pgd_pred = model(pgd)
         pgd_loss = loss_fn(pgd_pred, y)
 
-        loss = 0.3 * clean_loss + 0.7 * fgsm_loss + 0.0 * pgd_loss
+        loss = 0.6 * clean_loss + 0.3 * fgsm_loss + 0.1 * pgd_loss
         train_loss += loss.item()
         clean_loss_total += clean_loss.item()
         fgsm_loss_total += fgsm_loss.item()
@@ -88,6 +92,19 @@ def train_step(
         train_score_fgsm += (torch.argmax(fgsm_pred, dim=1) == y).sum().item()
         train_score_pgd += (torch.argmax(pgd_pred, dim=1) == y).sum().item()
         train_total += len(y)
+
+    optimizer.zero_grad()
+
+    fgsm_pred = model(fgsms)
+    fgsm_loss = loss_fn(fgsm_pred, y)
+
+    pgd_pred = model(pgds)
+    pgd_loss = loss_fn(pgd_pred, y)
+
+    loss = 0.7 * fgsm_loss + 0.3 * pgd_loss
+    loss.backward()
+    optimizer.step()
+
 
     train_loss = train_loss
     train_score = train_score / train_total
@@ -124,8 +141,8 @@ def test_step(
     # with torch.inference_mode():
     for _, X, y in dataloader:
         X, y = X.to(device), y.to(device)
-        pgd = PGD(model, X, y, n_iters=random.choice([1, 2, 3, 4, 5]), epsilon=random.choice([1, 2, 3, 4, 5])/255)
-        fgsm = FGSM(model, X, y, epsilon=random.choice([1, 2, 3, 4, 5])/255)
+        pgd = PGD(model, X, y, n_iters=random.choice([1, 2, 3, 4]), epsilon=random.choice([1, 2, 3, 4])/255)
+        fgsm = FGSM(model, X, y, epsilon=random.choice([1, 2, 3, 4])/255)
 
         y_pred = model(X)
         clean_loss = loss_fn(y_pred, y)
@@ -136,7 +153,7 @@ def test_step(
         pgd_pred = model(pgd)
         pgd_loss = loss_fn(pgd_pred, y)
 
-        loss = 0.3 * clean_loss + 0.7 * fgsm_loss + 0.0 * pgd_loss
+        loss = 0.6 * clean_loss + 0.3 * fgsm_loss + 0.1 * pgd_loss
         test_loss += loss.item()
         clean_loss_total += clean_loss.item()
         fgsm_loss_total += fgsm_loss.item()
@@ -147,10 +164,19 @@ def test_step(
         test_score_pgd += (torch.argmax(pgd_pred, dim=1) == y).sum().item()
         test_total += len(y)
 
+    fgsm_pred = model(fgsms)
+    fgsm_loss = loss_fn(fgsm_pred, y)
+
+    pgd_pred = model(pgds)
+    pgd_loss = loss_fn(pgd_pred, y)
+
+    test_score_fgsm += (torch.argmax(fgsm_pred, dim=1) == y).mean().item()
+    test_score_pgd += (torch.argmax(pgd_pred, dim=1) == y).mean().item()
+
     test_loss = test_loss
     test_score = test_score / test_total
-    test_score_fgsm = test_score_fgsm / test_total
-    test_score_pgd = test_score_pgd / test_total
+    test_score_fgsm = test_score_fgsm
+    test_score_pgd = test_score_pgd
 
     return (
         test_loss,
@@ -169,6 +195,13 @@ def save_model(model, save_path, file_name):
 
 def save_training_results(results, save_path, file_name):
     results.to_csv(os.path.join(save_path, file_name), index=False, sep=",")
+
+
+adversary_model = resnet18()
+adversary_model.fc = torch.nn.Linear(adversary_model.fc.weight.shape[1], 10)
+adversary_model.load_state_dict(torch.load(ADVERSARY_PATH))
+
+pgds, fgsms = None, None
 
 
 def train(
@@ -221,6 +254,7 @@ def train(
     progress = tqdm(range(epochs))
 
     for epoch in progress:
+        pgds, fgsms = get_adversary_dataset(adversary_model, train_dataloader, device)
         (
             train_loss,
             train_score,
@@ -238,6 +272,7 @@ def train(
         )
         scheduler.step()
         if not test_dataloader == None:
+            pgds, fgsms = get_adversary_dataset(adversary_model, test_dataloader, device)
             (
                 test_loss,
                 test_score,

@@ -1,8 +1,6 @@
 import torch
 import typing
-
-MEAN = torch.Tensor([0.2980, 0.2962, 0.2987])
-STD = torch.Tensor([0.2886, 0.2875, 0.2889])
+import random
 
 def FGSM(
      model: torch.nn.Module,
@@ -61,3 +59,13 @@ def PGD(
     if was_training:
         model.train()
     return x.requires_grad_(False)
+
+def get_adversary_dataset(model, dataloader, DEVICE):
+    pgds = []
+    fgsms = []
+    for i, x, y in dataloader:
+        x, y = x.to(DEVICE), y.to(DEVICE)
+        pgds.append(PGD(model, x, y, n_iters=random.choice([1, 2, 3, 4]), epsilon=random.choice([1, 2, 3, 4])/255))
+        fgsms.append(FGSM(model, x, y, epsilon=random.choice([1, 2, 3, 4])/255))
+    
+    return torch.stack(pgds), torch.stack(fgsms)
